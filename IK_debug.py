@@ -88,7 +88,7 @@ def test_code(test_case):
             [ sin(q)*sin(alpha), cos(q)*sin(alpha),  cos(alpha),  cos(alpha)*d ],
             [                 0,                 0,           0,              1 ]
         ])
-	return TF
+        return TF
 
     # Create individual transformation matrices
     T0_1  = TF_Matrix(alpha0, a0, d1, q1).subs(DH_Table)

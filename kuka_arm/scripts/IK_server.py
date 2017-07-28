@@ -62,12 +62,12 @@ def handle_calculate_IK(req):
         T0_1  = TF_Matrix(alpha0, a0, d1, q1).subs(DH_Table)
         T1_2  = TF_Matrix(alpha1, a1, d2, q2).subs(DH_Table)
         T2_3  = TF_Matrix(alpha2, a2, d3, q3).subs(DH_Table)
-        T3_4  = TF_Matrix(alpha3, a3, d4, q4).subs(DH_Table)
-        T4_5  = TF_Matrix(alpha4, a4, d5, q5).subs(DH_Table)
-        T5_6  = TF_Matrix(alpha5, a5, d6, q6).subs(DH_Table)
-        T6_EE = TF_Matrix(alpha6, a6, d7, q7).subs(DH_Table)
+        #T3_4  = TF_Matrix(alpha3, a3, d4, q4).subs(DH_Table)
+        #T4_5  = TF_Matrix(alpha4, a4, d5, q5).subs(DH_Table)
+        #T5_6  = TF_Matrix(alpha5, a5, d6, q6).subs(DH_Table)
+        #T6_EE = TF_Matrix(alpha6, a6, d7, q7).subs(DH_Table)
 
-        T0_EE = T0_1 * T1_2 * T2_3 * T3_4 * T4_5 * T5_6 * T6_EE
+        #T0_EE = T0_1 * T1_2 * T2_3 * T3_4 * T4_5 * T5_6 * T6_EE
 	    #
 	    #
 	    # Extract rotation matrices from the transformation matrices
@@ -97,11 +97,10 @@ def handle_calculate_IK(req):
         joint_trajectory_list = []
         for x in xrange(0, len(req.poses)):
             # IK code starts here
-            joint_trajectory_point = JointTrajectoryPoint()
 
-	    # Extract end-effector position and orientation from request
-	    # px,py,pz = end-effector position
-	    # roll, pitch, yaw = end-effector orientation
+            # Extract end-effector position and orientation from request
+            # px,py,pz = end-effector position
+    	    # roll, pitch, yaw = end-effector orientation
             px = req.poses[x].position.x
             py = req.poses[x].position.y
             pz = req.poses[x].position.z
@@ -111,7 +110,7 @@ def handle_calculate_IK(req):
                     req.poses[x].orientation.z, req.poses[x].orientation.w])
 
             ### Your IK code here
-	    # Compensate for rotation discrepancy between DH parameters and Gazebo
+    	    # Compensate for rotation discrepancy between DH parameters and Gazebo
             ROT_EE = ROT_EE.subs({'r': roll, 'p': pitch, 'y': yaw})
 
             EE = Matrix([[px],
@@ -119,11 +118,11 @@ def handle_calculate_IK(req):
                          [pz]])
 
             WC = EE - (0.303) * ROT_EE[:,2]
-	    #
-	    #
-	    # Calculate joint angles using Geometric IK method
-	    #
-	    #
+    	    #
+    	    #
+    	    # Calculate joint angles using Geometric IK method
+    	    #
+    	    #
             ###
             # Calculate joint angles using Geometric IK method
             theta1 = atan2(WC[1], WC[0])
@@ -143,7 +142,8 @@ def handle_calculate_IK(req):
             R0_3 = T0_1[0:3,0:3] * T1_2[0:3,0:3] * T2_3[0:3,0:3]
             R0_3 = R0_3.evalf(subs={q1: theta1, q2: theta3, q3: theta3})
 
-            R3_6 = R0_3.inv("LU") * ROT_EE
+            #R3_6 = R0_3.inv("LU") * ROT_EE
+            R3_6 = R0_3.inv() * ROT_EE
 
             # Euler angles from rotation Matrix
             theta4 = atan2(R3_6[2,2], -R3_6[0,2])
@@ -152,6 +152,7 @@ def handle_calculate_IK(req):
 
             # Populate response for the IK request
             # In the next line replace theta1,theta2...,theta6 by your joint angle variables
+            joint_trajectory_point = JointTrajectoryPoint()
             joint_trajectory_point.positions = [theta1, theta2, theta3, theta4, theta5, theta6]
             joint_trajectory_list.append(joint_trajectory_point)
 
