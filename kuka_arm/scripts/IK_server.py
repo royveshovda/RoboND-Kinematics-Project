@@ -85,12 +85,8 @@ def handle_calculate_IK(req):
                         [ sin(y),  cos(y), 0 ],
                         [ 0,            0, 1 ]]) # YAW
 
-        ROT_EE = ROT_z * ROT_y * ROT_x
-        Rot_Error = ROT_z.subs(y, radians(180)) * ROT_y.subs(p, radians(-90))
-        ROT_EE = ROT_EE * Rot_Error
-
-	#
-	#
+	    #
+	    #
         ###
 
         # Initialize service response
@@ -110,6 +106,10 @@ def handle_calculate_IK(req):
                     req.poses[x].orientation.z, req.poses[x].orientation.w])
 
             ### Your IK code here
+            ROT_EE = ROT_z * ROT_y * ROT_x
+            Rot_Error = ROT_z.subs(y, radians(180)) * ROT_y.subs(p, radians(-90))
+            ROT_EE = ROT_EE * Rot_Error
+
     	    # Compensate for rotation discrepancy between DH parameters and Gazebo
             ROT_EE = ROT_EE.subs({'r': roll, 'p': pitch, 'y': yaw})
 
