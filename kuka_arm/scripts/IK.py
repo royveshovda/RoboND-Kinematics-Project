@@ -162,8 +162,8 @@ class IK(object):
             theta2 = pi/2 - angle_a - angle_r24
             theta3 = pi/2 - gamma - angle_b
         else:
-            theta2 = pi/2 - angle_r24 + a
-            theta3 = pi/2 -
+            theta2 = pi/2 - angle_r24 + angle_a
+            theta3 = pi/2 - gamma - angle_b
 
         return [theta2, theta3]
 
