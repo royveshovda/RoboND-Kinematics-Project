@@ -1,13 +1,17 @@
 from sympy import *
 from time import time
 from mpmath import radians
-import tf
+import tf, sys
+
+#add folder for Kuka_IK class to path
+sys.path.insert(0, 'kuka_arm/scripts/')
+from IK import IK
 
 '''
 Format of test case is [ [[EE position],[EE orientation as quaternions]],[WC location],[joint angles]]
 You can generate additional test cases by setting up your kuka project and running `$ roslaunch kuka_arm forward_kinematics.launch`
 From here you can adjust the joint angles to find thetas, use the gripper to extract positions and orientation (in quaternion xyzw) and lastly use link 5
-to find the position of the wrist center. These newly generated test cases can be added to the test_cases dictionary.
+to find the position of the wrist center. These newly generate test cases can be added to the test_cases dictionary
 '''
 
 test_cases = {1:[[[2.16135,-1.42635,1.55109],
@@ -21,9 +25,8 @@ test_cases = {1:[[[2.16135,-1.42635,1.55109],
               3:[[[-1.3863,0.02074,0.90986],
                   [0.01735,-0.2179,0.9025,0.371016]],
                   [-1.1669,-0.17989,0.85137],
-                  [-2.99,-0.12,0.94,4.06,1.29,-4.12]],
-              4:[],
-              5:[]}
+                  [-2.99,-0.12,0.94,4.06,1.29,-4.12]]
+                  }
 
 
 def test_code(test_case):
@@ -58,34 +61,29 @@ def test_code(test_case):
 
     req = Pose(comb)
     start_time = time()
-    
     ########################################################################################
-    ## 
+    ## Insert IK code here starting at: Define DH parameter symbols
 
-    ## Insert IK code here!
-    
-    theta1 = 0
-    theta2 = 0
-    theta3 = 0
-    theta4 = 0
-    theta5 = 0
-    theta6 = 0
+    # px,py,pz = end-effector position
+    # roll, pitch, yaw = end-effector orientation (in gazebo frame)
+    px = req.poses[x].position.x
+    py = req.poses[x].position.y
+    pz = req.poses[x].position.z
 
-    ## 
-    ########################################################################################
-    
-    ########################################################################################
-    ## For additional debugging add your forward kinematics here. Use your previously calculated thetas
-    ## as the input and output the position of your end effector as your_ee = [x,y,z]
+    quaternion = [req.poses[x].orientation.x,
+                  req.poses[x].orientation.y,
+                  req.poses[x].orientation.z,
+                  req.poses[x].orientation.w]
 
-    ## (OPTIONAL) YOUR CODE HERE!
+    ik = IK()
 
-    ## End your code input for forward kinematics here!
-    ########################################################################################
+    [joint_angles, wc_actual, wc_error, ee_actual, ee_error] = ik.calculateJointAngles(px, py, pz, quaternion)
+
+    [theta1, theta2, theta3, theta4, theta5, theta6] = joint_angles
 
     ## For error analysis please set the following variables of your WC location and EE location in the format of [x,y,z]
-    your_wc = [1,1,1] # <--- Load your calculated WC values in this array
-    your_ee = [1,1,1] # <--- Load your calculated end effector value from your forward kinematics
+    your_wc = wc_actual # <--- Load your calculated WC values in this array
+    your_ee = ee_actual # <--- Load your calculated end effector value from your forward kinematics
     ########################################################################################
 
     ## Error analysis
@@ -116,8 +114,8 @@ def test_code(test_case):
     print ("Theta 5 error is: %04.8f" % t_5_e)
     print ("Theta 6 error is: %04.8f" % t_6_e)
     print ("\n**These theta errors may not be a correct representation of your code, due to the fact \
-           \nthat the arm can have muliple positions. It is best to add your forward kinmeatics to \
-           \nconfirm whether your code is working or not**")
+           \nthat the arm can have muliple posisiotns. It is best to add your forward kinmeatics to \
+           \nlook at the confirm wether your code is working or not**")
     print (" ")
 
     # Find FK EE error
@@ -131,11 +129,9 @@ def test_code(test_case):
         print ("End effector error for z position is: %04.8f" % ee_z_e)
         print ("Overall end effector offset is: %04.8f units \n" % ee_offset)
 
-
-
-
 if __name__ == "__main__":
     # Change test case number for different scenarios
-    test_case_number = 1
+    #test_code(test_cases[1])
 
-    test_code(test_cases[test_case_number])
+    for test_case in test_cases:
+        test_code(test_cases[test_case])
