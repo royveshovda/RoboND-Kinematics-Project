@@ -18,6 +18,7 @@
 [image1]: ./misc_images/jointAnglesAxes.png
 [image2]: ./misc_images/kr210_links.png
 [image3]: ./misc_images/general_formula.png
+[image4]: ./misc_images/joints.png
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/972/view) Points
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
@@ -154,6 +155,7 @@ For each calculation iteration, ROS feeds IK server the end effector position an
 
 These values are used to find the wrist center, which in turn is used to find the different joint angles (thetaX).
 
+![alt text][image4]
 
 Theta1, theta2, and theta3 are the base values to move the arm's wrist to the desired wrist center.
 
@@ -223,4 +225,9 @@ Speed is crucial for this IK server, so my code have certain optimizations:
 ##### Possible improvements
 I believe even more speed could be achieved if we could avoid sympy completely. This comes at the price of readability, and should only be done if speed is really needed.
 
-Another improvement is that my implementations does a lot of rotations of the gripper as it moves. I never managed to nail down why this happens, but of course the implementation would improve a lot if this can be avoided. To achieve this fully, I guess the calculation needs to compensate for the previous position, and find the movement with the least rotations.
+TODO: IMAGE SHOWING DROP
+
+Another improvement is that my implementations does a lot of rotations of the gripper as it moves. This comes from the fact the there can be multiple solutions to the reverse IK, and my code does not pick the option with the least rotations from the current position. If the implementation can pick the "best" option, the arm would rotate a lot less, as it moves.
+
+##### Challenges
+My biggest hurdle with this project was to understand the math and calculations involved. In the first version available, the simulator was also somewhat buggy, but this was resolved in the 2.1.0 version. I cannot blame the buggy simulator too much, as my ignorance was the biggest challenge here.
