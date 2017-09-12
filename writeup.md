@@ -155,15 +155,40 @@ For each calculation iteration, ROS feeds IK server the end effector position an
 These values are used to find the wrist center, which in turn is used to find the different joint angles (thetaX).
 
 
+Theta1, theta2, and theta3 are the base values to move the arm's wrist to the desired wrist center.
 
-TODO
+Theta1 is calculated like this:
 
+```theta1 = np.arctan2(wc[1,0], wc[0,0])```
+
+Theta2 and Theta3 is a bot more involved to calculate.
+
+The code looks like this:
 ```
-ee_target = Matrix([px, py, pz])
+# angle of declination of link 3
+gamma = consts['gamma']
 
+# legnth of line from joint 3 to joint 4 coord frame
+l3 = consts['l3']
 
+# length of link 2
+a2 = consts['a2']
 
+# vector from joint 2 to joint 4 coord frame
+r24z = r24[2]
+r24xy = (r24[0]**2 + r24[1]**2)**0.5
+angle_r24 = atan2(r24z, r24xy)
+r24_mag = (r24[0]**2 + r24[1]**2 + r24[2]**2)**0.5
 
+# angle_a between r24 and a2
+angle_a = acos((-l3**2 + a2**2 + r24_mag**2)/(2*a2*r24_mag))
+
+# angle_b between a2 and l3
+angle_b = acos((-r24_mag**2 + a2**2 + l3**2)/(2*a2*l3))
+
+theta2 = pi/2 - angle_a - angle_r24
+theta3 = pi/2 - gamma - angle_b
+```
 
 With theta1, theta2, and theta3 computed, we can use FK to compute a rotation matrix for links 0 to 3. Using roll, pitch, and yaw values we can also compute the gripper rotation. These two are then used to compute a gripper rotation matrix relative to link3.
 
