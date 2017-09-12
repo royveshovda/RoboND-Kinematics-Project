@@ -138,33 +138,33 @@ class IK(object):
 
     def _createTheta23(self, consts, r24, default_orientation = True):
         #return theta 2 and theta 3 using law of cosines with sides
-        ##r24 (vector from joint 2 to joint 4 coord frame)
-        ##a2 (length of link 2)
-        ##l3 (legnth of line from joint 3 to joint 4 coord frame)
-        ##angle_a between r24 and a2
-        ##angle_b between a2 and l3
-        ##gamma angle of declination of link 3
-        ##angle r24 (angle of inclination of r24 from XY plane)
+        ## For overview refer to writeup.md
 
+        # gamma angle of declination of link 3
         gamma = consts['gamma']
+
+        # l3 (legnth of line from joint 3 to joint 4 coord frame)
         l3 = consts['l3']
+
+        # a2 (length of link 2)
         a2 = consts['a2']
 
+        # r24 (vector from joint 2 to joint 4 coord frame)
         r24z = r24[2]
         r24xy = (r24[0]**2 + r24[1]**2)**0.5
+
+        # angle r24 (angle of inclination of r24 from XY plane)
         angle_r24 = atan2(r24z, r24xy)
         r24_mag = (r24[0]**2 + r24[1]**2 + r24[2]**2)**0.5
 
+        # angle_a between r24 and a2
         angle_a = acos((-l3**2 + a2**2 + r24_mag**2)/(2*a2*r24_mag))
+
+        # angle_b between a2 and l3
         angle_b = acos((-r24_mag**2 + a2**2 + l3**2)/(2*a2*l3))
 
-        if default_orientation:
-            #if joint 4 is below vector from joint 2 to joint 3
-            theta2 = pi/2 - angle_a - angle_r24
-            theta3 = pi/2 - gamma - angle_b
-        else:
-            theta2 = pi/2 - angle_r24 + angle_a
-            theta3 = pi/2 - gamma - angle_b
+        theta2 = pi/2 - angle_a - angle_r24
+        theta3 = pi/2 - gamma - angle_b
 
         return [theta2, theta3]
 
@@ -176,8 +176,6 @@ class IK(object):
         #Use rotation matrix from joint 3 to 6 to calculate
         #theta 4, theta5, theta6
         R_03 = self.T[(0,3)][:3,:3].evalf(subs = {self.q1: theta1,
-                                                  self.q2: theta2,
-                                                  self.q3: theta3})
 
         R_36 = R_03.T*Rrpy
         theta4 = atan2(R_36[2,2], -R_36[0,2])
@@ -219,19 +217,13 @@ class IK(object):
         wc_target = self._createWristCenter(self.consts, ee_target, Rrpy)
 
         theta1 = self._createTheta1(wc_target)
-        print('Theta1: {0}'.format(theta1))
 
         #Calculate r24 (vector from joint 2 to joint 4)
         r24 = self._create_r24(wc_target, theta1)
 
         theta2, theta3 = self._createTheta23(self.consts, r24)
-        print('Theta2: {0}'.format(theta2.evalf()))
-        print('Theta3: {0}'.format(theta3.evalf()))
 
         theta4, theta5, theta6 = self._createTheta456(theta1, theta2, theta3, Rrpy)
-        print('Theta4: {0}'.format(theta4.evalf()))
-        print('Theta5: {0}'.format(theta5.evalf()))
-        print('Theta6: {0}'.format(theta6.evalf()))
 
         joint_angles = [theta1, theta2, theta3, theta4, theta5, theta6]
 
@@ -239,8 +231,5 @@ class IK(object):
          wc_error,
          ee_actual,
          ee_error] = self.calculateIKError(wc_target, ee_target, joint_angles)
-
-        print('Wrist Center Error: {0}'.format(wc_error))
-        print('End Effector Error: {0}'.format(ee_error))
 
         return [joint_angles, wc_actual, wc_error, ee_actual, ee_error]
