@@ -17,6 +17,7 @@
 [//]: # (Image References)
 [image1]: ./misc_images/jointAnglesAxes.png
 [image2]: ./misc_images/kr210_links.png
+[image3]: ./misc_images/general_formula.png
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/972/view) Points
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
@@ -51,23 +52,99 @@ The table was created by starting with the joint locations (as suggested from th
 
 #### 2. Using the DH parameter table you derived earlier, create individual transformation matrices about each joint. In addition, also generate a generalized homogeneous transform between base_link and gripper_link using only end-effector(gripper) pose.
 
-I used the table above and created the individual transformation matrices.
+I used the table above and and the general formula shown under, to created the individual transformation matrices.
 
-```python
-TO_1 = Matrix([[cos(quaternion1), -sin(quaternion1), 0, 0], [sin(quaternion1), cos(quaternion1), 0, 0], [0, 0, 1, 0.750000000000000], [0, 0, 0, 1]])
+![alt text][image3]
 
- T1_2 = Matrix([[sin(quaternion2), cos(quaternion2), 0, 0.350000000000000], [0, 0, 1, 0], [cos(quaternion2), -sin(quaternion2), 0, 0], [0, 0, 0, 1]])
+This resulted in the following transformation matrices:
 
- T2_3 = Matrix([[cos(quaternion3), -sin(quaternion3), 0, 1.25000000000000], [sin(quaternion3), cos(quaternion3), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+##### T0_1
+||||
+---|---|---|---|
+cos(q1) | -sin(q1) | 0 | 0
+sin(q1) | con(q1) | 0 | 0
+0 | 0 | 1 | 0.75
+0 | 0 | 0 | 1
 
- T3_4 = Matrix([[cos(quaternion4), -sin(quaternion4), 0, -0.0540000000000000], [0, 0, 1, 1.50000000000000], [-sin(quaternion4), -cos(quaternion4), 0, 0], [0, 0, 0, 1]])
+##### T1_2
+||||
+---|---|---|---|
+sin(q2) | cos(q2) | 0 | 0.35
+0 | 0 | 1 | 0
+cos(q2) | -sin(q2) | 0 | 0
+0 | 0 | 0 | 1
 
- T4_5 = Matrix([[cos(quaternion5), -sin(quaternion5), 0, 0], [0, 0, -1, 0], [sin(quaternion5), cos(quaternion5), 0, 0], [0, 0, 0, 1]])
+##### T2_3
+||||
+---|---|---|---|
+cos(q3) | -sin(q3) | 0 | 1.25
+sin(q3) | cos(q3) | 0 | 0
+0 | 0 | 1 | 0
+0 | 0 | 0 | 1
 
- T5_6 = Matrix([[cos(quaternion6), -sin(quaternion6), 0, 0], [0, 0, 1, 0], [-sin(quaternion6), -cos(quaternion6), 0, 0], [0, 0, 0, 1]])
 
- T6_EEF = Matrix([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0.303000000000000], [0, 0, 0, 1]])
-```
+##### T3_4
+||||
+---|---|---|---|
+cos(q4) | -sin(q4) | 0 | 0
+0 | 0 | 1 | 1.5
+-sin(q4) | -cos(q4) | 0 | 0
+0 | 0 | 0 | 1
+
+##### T4_5
+||||
+---|---|---|---|
+cos(q5) | -sin(q5) | 0 | 0
+0 | 0 | -1 | 0
+sin(q5) | cos(q5) | 0 | 0
+0 | 0 | 0 | 1
+
+
+##### T5_6
+||||
+---|---|---|---|
+cos(q6) | -sin(q6) | 0 | 0
+0 | 0 | 1 | 0
+-sin(q6) | -cos(q6) | 0 | 0
+0 | 0 | 0 | 1
+
+
+##### T6_EE
+||||
+---|---|---|---|
+1 | 0 | 0 | 0
+0 | 1 | 0 | 0
+0 | 0 | 1 | 0.303
+0 | 0 | 0 | 1
+
+To get the pose to end-effector we simply multiply these matrices:
+
+```T0_EE = T0_1 * T1_2 * T2_3 * T3_4 * T4_5 * T5_6 * T6_EE```
+
+To correct to rotation, I also used the following matrices:
+
+##### ROT X
+|||
+---|---|---|
+1 | 0 | 0
+0 | cos(pi/2) | -sin(pi/2)
+0 | sin(pi/2) | cos(pi/2)
+
+##### ROT Y
+|||
+---|---|---|
+cos(pi/2) | 0 | sin(pi/2)
+0 | 1 | 0
+-sin(pi/2) | 0 | cos(pi/2)
+
+##### ROT Z
+|||
+---|---|---|
+cos(pi/2) | -sin(pi/2) | 0
+sin(pi/2) | cos(pi/2) | 0
+0 | 0 | 1
+
+This was done to compensate for actual angel of the end-effector.
 
 #### 3. Decouple Inverse Kinematics problem into Inverse Position Kinematics and inverse Orientation Kinematics; doing so derive the equations to calculate all individual joint angles.
 
@@ -75,7 +152,34 @@ The problem can be broken into two sub-problems: finding the wrist center and fi
 
 For each calculation iteration, ROS feeds IK server the end effector position and orientation relative to the base frame.
 
-My implementation calculates center and orientation separately.
+These values are used to find the wrist center, which in turn is used to find the different joint angles (thetaX).
+
+
+
+TODO
+
+```
+ee_target = Matrix([px, py, pz])
+
+
+
+
+
+With theta1, theta2, and theta3 computed, we can use FK to compute a rotation matrix for links 0 to 3. Using roll, pitch, and yaw values we can also compute the gripper rotation. These two are then used to compute a gripper rotation matrix relative to link3.
+
+My code looks like this:
+
+```
+R_03 = self.T[(0,3)][:3,:3].evalf(subs =
+                                    {self.q1: theta1,
+                                    self.q2: theta2,
+                                    self.q3: theta3})
+
+R_36 = R_03.T*Rrpy
+theta4 = atan2(R_36[2,2], -R_36[0,2])
+theta5 = acos(R_36[1,2])#atan2((R_36[0,2]**2 + R_36[2,2]**2)**0.5, R_36[1,2])
+theta6 = atan2(-R_36[1,1], R_36[1,0])
+```
 
 
 ### Project Implementation
