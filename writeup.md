@@ -19,6 +19,7 @@
 [image2]: ./misc_images/kr210_links.png
 [image3]: ./misc_images/general_formula.png
 [image4]: ./misc_images/joints.png
+[image5]: ./misc_images/drops.png
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/972/view) Points
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
@@ -225,7 +226,9 @@ Speed is crucial for this IK server, so my code have certain optimizations:
 ##### Possible improvements
 I believe even more speed could be achieved if we could avoid sympy completely. This comes at the price of readability, and should only be done if speed is really needed.
 
-TODO: IMAGE SHOWING DROP
+The image below shows 9 out of 9 dropped inside the bin.
+
+![alt text][image5]
 
 Another improvement is that my implementations does a lot of rotations of the gripper as it moves. This comes from the fact the there can be multiple solutions to the reverse IK, and my code does not pick the option with the least rotations from the current position. If the implementation can pick the "best" option, the arm would rotate a lot less, as it moves.
 
