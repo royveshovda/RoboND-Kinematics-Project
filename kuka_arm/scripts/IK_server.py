@@ -39,9 +39,7 @@ class handle_IK(object):
                               req.poses[x].orientation.w]
 
                 # Populate response for the IK request
-                # In the next line replace theta1,theta2...,theta6 by your joint angle variables
                 [joint_angles, wc_actual, wc_error, ee_actual, ee_error] = self.ik.calculateJointAngles(px, py, pz, quaternion)
-
 
                 joint_trajectory_point.positions = joint_angles
                 joint_trajectory_list.append(joint_trajectory_point)
@@ -54,7 +52,7 @@ class handle_IK(object):
         # initialize node and declare calculate_ik service
         rospy.init_node('IK_server')
         s = rospy.Service('calculate_ik', CalculateIK, self.handle_calculate_IK)
-        print "Ready to receive an IK request"
+        print "Ready for IK request"
         rospy.spin()
 
 if __name__ == "__main__":
